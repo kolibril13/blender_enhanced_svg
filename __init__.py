@@ -5,6 +5,8 @@ import bpy
 from .imports import (
     ImportSVGOperator,
     SVG_FH_import,
+    ImportSimpleSVGOperator,
+    SimpleSVG_FH_import,
 )
 
 
@@ -17,6 +19,8 @@ def register():
     add_current_module_to_path()
 
     # Register Blender classes
+    bpy.utils.register_class(ImportSimpleSVGOperator)
+    bpy.utils.register_class(SimpleSVG_FH_import)
     bpy.utils.register_class(ImportSVGOperator)
     bpy.utils.register_class(SVG_FH_import)
 
@@ -25,6 +29,8 @@ def unregister():
     # Unregister Blender classes
     bpy.utils.unregister_class(SVG_FH_import)
     bpy.utils.unregister_class(ImportSVGOperator)
+    bpy.utils.unregister_class(SimpleSVG_FH_import)
+    bpy.utils.unregister_class(ImportSimpleSVGOperator)
 
 
 if __name__ == "__main__":
