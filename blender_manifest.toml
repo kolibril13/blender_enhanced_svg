@@ -4,10 +4,11 @@ schema_version = "1.0.0"
 # Change the values according to your extension
 id = "spicy_svg"
 version = "1.0.0"
-name = "Spicy Svg"
+name = "spicy_svg"
 tagline = "This is another extension"
 maintainer = "Jan-Hendrik Müller"
-# Supported types: "add-on", "theme"
+# Supported types: "add-on",
+	"theme"
 type = "add-on"
 
 # Optional link to documentation, support, source files, etc
@@ -15,7 +16,10 @@ type = "add-on"
 
 # Optional list defined by Blender and server, see:
 # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
-tags = ["Animation", "Sequencer"]
+tags = [
+	"Animation",
+	"Sequencer",
+]
 
 blender_version_min = "4.2.0"
 # # Optional: Blender version that the extension does not support, earlier versions are supported.
@@ -34,8 +38,13 @@ license = [
 # ]
 
 # Optional list of supported platforms. If omitted, the extension will be available in all operating systems.
-# platforms = ["windows-x64", "macos-arm64", "linux-x64"]
-# Other supported platforms: "windows-arm64", "macos-x64"
+# platforms = [
+	"windows-x64",
+	"macos-arm64",
+	"linux-x64",
+]
+# Other supported platforms: "windows-arm64",
+	"macos-x64"
 
 # Optional: bundle 3rd party Python modules.
 # https://docs.blender.org/manual/en/dev/advanced/extensions/python_wheels.html
@@ -71,3 +80,16 @@ license = [
 #   "/.git/",
 #   "/*.zip",
 # ]
+wheels = [
+	"./wheels/lxml-5.3.2-cp311-cp311-macosx_10_9_universal2.whl",
+	"./wheels/lxml-5.3.2-cp311-cp311-macosx_10_9_x86_64.whl",
+	"./wheels/lxml-5.3.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+	"./wheels/lxml-5.3.2-cp311-cp311-win_amd64.whl",
+	"./wheels/svg.path-6.3-py2.py3-none-any.whl",
+]
+platforms = [
+	"windows-x64",
+	"linux-x64",
+	"macos-arm64",
+	"macos-x64",
+]
