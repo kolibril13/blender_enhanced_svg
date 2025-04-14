@@ -2,6 +2,8 @@ import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from pathlib import Path
+import tempfile
+
 import time
 
 from .svg_preprocessing import preprocess_svg
@@ -29,21 +31,40 @@ class ImportSVGOperator(bpy.types.Operator, ImportHelper):
             return {"CANCELLED"}
 
         # Prepare file variables
-        svg_file = Path(self.filepath)
-        file_name_without_ext = svg_file.stem
+        raw_svg_file = Path(self.filepath)
+        file_name_without_ext = raw_svg_file.stem
 
         # Start the timer
         start_time = time.perf_counter()
 
         # Compile and import the file using our helper function
-        processed_svg = preprocess_svg(svg_file)
+        processed_svg = preprocess_svg(raw_svg_file.read_text())
 
-        collection = bpy.context.collection.children[-1]
+
+        # Create temporary files
+        temp_dir = Path(tempfile.gettempdir())
+        processed_svg_file = temp_dir / f"{file_name_without_ext}.svg"
+        processed_svg_file.write_text(processed_svg)
+
+        bpy.ops.import_curve.svg(filepath=str(processed_svg_file))
+
+        # Get and rename the imported collection
+        imported_collection = bpy.context.scene.collection.children.get(
+            processed_svg_file.name
+        )
+        if not imported_collection:
+            raise RuntimeError("Failed to import SVG file")
+
+        imported_collection.name = f"SVG_{file_name_without_ext}"
+        imported_collection.processed_svg = processed_svg
+
+
+        # collection = bpy.context.collection.children[-1]
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         self.report(
             {"INFO"},
-            f" 🦢  SVG Importer: {svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {collection.name}",
+            f" 🦢  SVG Importer: {raw_svg_file.name} rendered in {elapsed_time_ms:.2f} ms as collection.name",
         )
         return {"FINISHED"}
 
