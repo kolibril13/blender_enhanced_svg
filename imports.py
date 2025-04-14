@@ -4,14 +4,14 @@ from bpy.props import StringProperty
 from pathlib import Path
 import time
 
-from svg_preprocessing import preprocess_svg
+from .svg_preprocessing import preprocess_svg
 
 # Operator for the button and drag-and-drop
-class ImportTypstOperator(bpy.types.Operator, ImportHelper):
-    """Operator to import a .txt or .typ file, compile it via Typst, and import as SVG in Blender."""
+class ImportSVGOperator(bpy.types.Operator, ImportHelper):
+    """Operator to import a .svg file and import as SVG in Blender."""
 
-    bl_idname = "import_scene.import_txt_typst"
-    bl_label = "Import Typst File (.txt/.typ)"
+    bl_idname = "import_scene.import_svg"
+    bl_label = "Import SVG File (.svg)"
     bl_options = {"PRESET", "UNDO"}
 
     # ImportHelper provides a default 'filepath' property,
@@ -19,13 +19,13 @@ class ImportTypstOperator(bpy.types.Operator, ImportHelper):
     filepath: StringProperty(subtype="FILE_PATH", options={"SKIP_SAVE"})
 
     # Set a default extension (the user can change it in the file browser)
-    filename_ext = ".txt"
-    filter_glob: StringProperty(default="*.txt;*.typ", options={"HIDDEN"}, maxlen=255)
+    filename_ext = ".svg"
+    filter_glob: StringProperty(default="*.svg", options={"HIDDEN"}, maxlen=255)
 
     def execute(self, context):
-        # Verify that the selected file is either a .txt or .typ file.
-        if not self.filepath.lower().endswith((".txt", ".typ")):
-            self.report({"WARNING"}, "Selected file is not a TXT or TYP file")
+        # Verify that the selected file is a .svg file.
+        if not self.filepath.lower().endswith(".svg"):
+            self.report({"WARNING"}, "Selected file is not an SVG file")
             return {"CANCELLED"}
 
         # Prepare file variables
@@ -43,7 +43,7 @@ class ImportTypstOperator(bpy.types.Operator, ImportHelper):
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         self.report(
             {"INFO"},
-            f" 🦢  Typst Importer: {svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {collection.name}",
+            f" 🦢  SVG Importer: {svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {collection.name}",
         )
         return {"FINISHED"}
 
@@ -57,13 +57,13 @@ class ImportTypstOperator(bpy.types.Operator, ImportHelper):
 
 
 # File Handler for drag-and-drop support
-class TXT_FH_import(bpy.types.FileHandler):
-    """A file handler to allow .txt and .typ files to be dragged and dropped directly into Blender."""
+class SVG_FH_import(bpy.types.FileHandler):
+    """A file handler to allow .svg files to be dragged and dropped directly into Blender."""
 
-    bl_idname = "TXT_FH_import"
-    bl_label = "File handler for TXT/TYP import (Typst)"
-    bl_import_operator = "import_scene.import_txt_typst"
-    bl_file_extensions = ".txt;.typ"
+    bl_idname = "SVG_FH_import"
+    bl_label = "File handler for SVG import"
+    bl_import_operator = "import_scene.import_svg"
+    bl_file_extensions = ".svg"
 
     @classmethod
     def poll_drop(cls, context):

@@ -1,17 +1,31 @@
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-def register(): ...
+from .utils import add_current_module_to_path
+import bpy
 
 
-def unregister(): ...
+from .imports import (
+    ImportSVGOperator,
+    SVG_FH_import,
+)
+
+
+# Global list to store our keymap entries for cleanup.
+addon_keymaps = []
+
+
+def register():
+    # Add the current module to Python's path to ensure imports work correctly
+    add_current_module_to_path()
+
+    # Register Blender classes
+    bpy.utils.register_class(ImportSVGOperator)
+    bpy.utils.register_class(SVG_FH_import)
+
+
+def unregister():
+    # Unregister Blender classes
+    bpy.utils.unregister_class(SVG_FH_import)
+    bpy.utils.unregister_class(ImportSVGOperator)
+
+
+if __name__ == "__main__":
+    register()
