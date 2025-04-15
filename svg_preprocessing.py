@@ -218,7 +218,7 @@ def preprocess_svg(svg_content):
 
     Returns the fully processed SVG content as a string.
     """
-    simplified_svg = flatten_svg(svg_content)
-    text_to_paths_svg = convert_text_to_paths(simplified_svg)
-    processed_svg = stroke_to_filled_path(text_to_paths_svg)
-    return processed_svg
+    svg_processed = flatten_svg(svg_content)
+    # svg_processed = convert_text_to_paths(svg_processed) # not yet ready for use
+    svg_processed = stroke_to_filled_path(svg_processed)
+    return svg_processed
