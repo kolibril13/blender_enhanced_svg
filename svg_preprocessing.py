@@ -8,18 +8,45 @@ SVG_NS = "http://www.w3.org/2000/svg"
 NS_MAP = {"svg": SVG_NS, "xlink": "http://www.w3.org/1999/xlink"}
 
 
+def _ensure_unicode(xml_string):
+    """
+    Ensures the input XML string is a Unicode string without an XML encoding declaration.
+    If the input is bytes, decodes as UTF-8.
+    If the input is str, strips any XML encoding declaration.
+    """
+    if isinstance(xml_string, bytes):
+        xml_string = xml_string.decode("utf-8")
+    # Remove XML encoding declaration if present
+    import re
+    xml_string = re.sub(r'<\?xml[^>]*encoding=[\'"].*?[\'"][^>]*\?>', '', xml_string, flags=re.IGNORECASE)
+    return xml_string
+
+
 def flatten_svg(svg_content):
     """
     Replaces all <use xlink:href="#..."> references with the actual symbol contents,
     preserving transforms and styles so the final visual layout is unchanged.
     """
+    svg_content = _ensure_unicode(svg_content)
     # Parse the SVG content, handling XML declarations if present
     try:
+        # First try parsing as a direct XML fragment
         tree = etree.fromstring(svg_content)
     except etree.XMLSyntaxError:
-        # Try parsing as an XML document with potential XML declaration
-        parser = etree.XMLParser(remove_blank_text=True)
-        tree = etree.fromstring(svg_content, parser)
+        try:
+            # Try parsing as an XML document with potential XML declaration
+            parser = etree.XMLParser(remove_blank_text=True)
+            tree = etree.fromstring(svg_content, parser)
+        except:
+            # If still failing, try to handle SVG with doctype or other preamble
+            # by extracting just the SVG element
+            import re
+            svg_match = re.search(r'<svg[^>]*>.*</svg>', svg_content, re.DOTALL)
+            if svg_match:
+                parser = etree.XMLParser(remove_blank_text=True)
+                tree = etree.fromstring(svg_match.group(0), parser)
+            else:
+                raise
 
     # Collect all <symbol> elements by ID.
     symbols = {}
@@ -162,13 +189,24 @@ def stroke_to_filled_path(svg_content):
     Parses the SVG content (as a string), finds any <path> elements that use a stroke,
     converts each stroke to a filled outline path, and returns the modified SVG as a string.
     """
+    svg_content = _ensure_unicode(svg_content)
     # Parse using lxml, handling XML declarations if present
     try:
         root = etree.fromstring(svg_content)
     except etree.XMLSyntaxError:
-        # Try parsing as an XML document with potential XML declaration
-        parser = etree.XMLParser(remove_blank_text=True)
-        root = etree.fromstring(svg_content, parser)
+        try:
+            # Try parsing as an XML document with potential XML declaration
+            parser = etree.XMLParser(remove_blank_text=True)
+            root = etree.fromstring(svg_content, parser)
+        except:
+            # If still failing, try to handle SVG with doctype or other preamble
+            import re
+            svg_match = re.search(r'<svg[^>]*>.*</svg>', svg_content, re.DOTALL)
+            if svg_match:
+                parser = etree.XMLParser(remove_blank_text=True)
+                root = etree.fromstring(svg_match.group(0), parser)
+            else:
+                raise
 
     # Find all <path> elements (using XPath with our namespace map).
     path_elems = root.xpath(".//svg:path", namespaces=NS_MAP)
