@@ -200,14 +200,77 @@ def stroke_to_filled_path(svg_content):
     return etree.tostring(root, encoding="unicode", pretty_print=True)
 
 
+def convert_text_to_paths(svg_content):
+    """
+    Converts all text elements in the SVG to path elements.
+    This is a simplified approach that creates a path for each text element.
+    """
+    try:
+        root = etree.fromstring(svg_content)
+    except etree.XMLSyntaxError:
+        parser = etree.XMLParser(remove_blank_text=True)
+        root = etree.fromstring(svg_content, parser)
+    
+    # Find all text elements
+    text_elements = root.xpath(".//svg:text", namespaces=NS_MAP)
+    
+    for text_elem in text_elements:
+        # Create a group to hold the text-as-path
+        text_group = etree.Element(f"{{{SVG_NS}}}g")
+        
+        # Copy attributes from text element to group
+        for attr_name, attr_value in text_elem.attrib.items():
+            if attr_name not in ("x", "y"):  # Handle position separately
+                text_group.set(attr_name, attr_value)
+        
+        # Get text content and position
+        text_content = text_elem.text or ""
+        x = float(text_elem.get("x", "0"))
+        y = float(text_elem.get("y", "0"))
+        
+        # Create a path element for the text
+        path_elem = etree.Element(f"{{{SVG_NS}}}path")
+        
+        # Set attributes for the path
+        fill_color = text_elem.get("fill", "#000000")
+        path_elem.set("fill", fill_color)
+        
+        # Create a simple path data representing the text area
+        # This is a simplified approach - in a real implementation,
+        # you would use a font rendering library to get actual glyph paths
+        font_size = float(text_elem.get("font-size", "12"))
+        text_width = len(text_content) * font_size * 0.6  # Rough estimate
+        
+        # Create a rectangle path as a placeholder for the text
+        path_data = f"M {x},{y-font_size*0.8} h {text_width} v {font_size} h {-text_width} Z"
+        path_elem.set("d", path_data)
+        
+        # Add a title element with the original text for reference
+        title_elem = etree.Element(f"{{{SVG_NS}}}title")
+        title_elem.text = text_content
+        path_elem.append(title_elem)
+        
+        # Add the path to the group
+        text_group.append(path_elem)
+        
+        # Replace the text element with the group
+        parent = text_elem.getparent()
+        if parent is not None:
+            parent.replace(text_elem, text_group)
+    
+    return etree.tostring(root, encoding="unicode", pretty_print=True)
+
+
 def preprocess_svg(svg_content):
     """
-    Performs a two-step preprocessing on the SVG content:
+    Performs a three-step preprocessing on the SVG content:
       1. Flattens the SVG by inlining symbols (via flatten_svg).
-      2. Converts stroked paths into filled outline paths (via stroke_to_filled_path).
+      2. Converts text elements to path elements (via convert_text_to_paths).
+      3. Converts stroked paths into filled outline paths (via stroke_to_filled_path).
 
     Returns the fully processed SVG content as a string.
     """
     simplified_svg = flatten_svg(svg_content)
-    processed_svg = stroke_to_filled_path(simplified_svg)
+    text_to_paths_svg = convert_text_to_paths(simplified_svg)
+    processed_svg = stroke_to_filled_path(text_to_paths_svg)
     return processed_svg
