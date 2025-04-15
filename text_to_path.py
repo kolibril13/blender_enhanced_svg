@@ -64,7 +64,8 @@ def convert_text_to_paths_in_svg(svg_content):
         str: The modified SVG content with <text> elements converted to paths.
     """
     SVG_NS = "http://www.w3.org/2000/svg"
-    NS_MAP = {"svg": SVG_NS}
+    XLINK_NS = "http://www.w3.org/1999/xlink"
+    NS_MAP = {"svg": SVG_NS, "xlink": XLINK_NS}
     
     # Parse the SVG content.
     try:
@@ -91,6 +92,9 @@ def convert_text_to_paths_in_svg(svg_content):
         y = float(text_elem.get("y", "0"))
         font_size = float(text_elem.get("font-size", "12"))
         
+        # Extract transform if it exists
+        transform = text_elem.get("transform", "")
+        
         # Resolve the font path.
         try:
             import matplotlib.font_manager as fm
@@ -104,9 +108,19 @@ def convert_text_to_paths_in_svg(svg_content):
         
         # Get the group containing glyph paths.
         glyph_group = text_to_svg_group(text_content, font_path, font_size, start_x=0)
+        
         # Wrap the glyph group in an outer group to apply the vertical (y) translation.
         outer_group = etree.Element(f"{{{SVG_NS}}}g")
-        outer_group.set("transform", f"translate({x},{y})")
+        
+        # Apply the original transform if it exists, otherwise just use x,y translation
+        if transform:
+            outer_group.set("transform", transform)
+            # If transform already exists, we need to add the glyph group with its own transform
+            # to position it correctly relative to the original text position
+            glyph_group.set("transform", f"translate({x},{y})")
+        else:
+            outer_group.set("transform", f"translate({x},{y})")
+        
         outer_group.append(glyph_group)
         
         # Replace the original <text> element with the new outer group.
