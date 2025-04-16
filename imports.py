@@ -3,10 +3,122 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty
 from pathlib import Path
 import tempfile
+from mathutils import Matrix
+import contextlib
 
 import time
 
 from .svg_preprocessing import preprocess_svg
+
+def deduplicate_materials(collection: bpy.types.Collection) -> None:
+    """
+    Deduplicate materials in a collection by reusing identical materials and giving them descriptive names.
+
+    Args:
+        collection: The collection containing objects whose materials need deduplication
+    """
+
+    # # Clean up any remaining unused materials that might have been created before
+    # for _ in range(3):  # Run multiple times to ensure all orphaned data is removed
+    #     bpy.ops.outliner.orphans_purge(do_recursive=True) #TODO : not very tested, and might delete some materials unintended
+
+    materials_dict = {}
+
+    for obj in collection.objects:
+        if not obj.data.materials:
+            continue
+
+        current_mat = obj.data.materials[0]
+        mat_key = tuple(current_mat.diffuse_color)
+
+        if mat_key in materials_dict:
+            obj.data.materials.clear()
+            obj.data.materials.append(materials_dict[mat_key])
+        else:
+            rgb = current_mat.diffuse_color[:3]
+            hex_color = "".join(f"{int(c*255):02x}" for c in rgb)
+            mat_name = f"Mat{len(materials_dict)}_#{hex_color}"
+
+            # Check if material already exists in Blender
+            existing_mat = bpy.data.materials.get(mat_name)
+            if existing_mat:
+                new_mat = existing_mat
+            else:
+                new_mat = create_material(current_mat.diffuse_color, mat_name)
+
+            materials_dict[mat_key] = new_mat
+
+            obj.data.materials.clear()
+            obj.data.materials.append(new_mat)
+
+            if current_mat.users == 0:
+                bpy.data.materials.remove(current_mat)
+
+    # Clean up any remaining unused materials
+    # for _ in range(3):  # Run multiple times to ensure all orphaned data is removed
+    with contextlib.redirect_stdout(None):
+
+        bpy.ops.outliner.orphans_purge(
+            do_recursive=True
+        )  # TODO : not very tested, and might delete some materials unintended
+
+
+# Core object and material setup functions
+def setup_object(obj: bpy.types.Object, scale_factor: float = 200) -> None:
+    """Setup individual object properties."""
+    obj.data.transform(Matrix.Scale(scale_factor, 4))
+    obj["opacity"] = 1.0
+    obj.id_properties_ui("opacity").update(min=0.0, max=1.0, step=0.1)
+
+
+def create_material(color, name: str = "") -> bpy.types.Material:
+    """Create a new material with nodes setup for opacity."""
+    # Check if material with this name already exists
+    existing_mat = bpy.data.materials.get(name)
+    if existing_mat:
+        return existing_mat
+
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    mat.blend_method = "BLEND"
+
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+
+    nodes.clear()
+
+    # Create necessary nodes
+    transparent = nodes.new(type="ShaderNodeBsdfTransparent")
+    emission = nodes.new(type="ShaderNodeEmission")
+    mix_shader = nodes.new(type="ShaderNodeMixShader")
+    output = nodes.new(type="ShaderNodeOutputMaterial")
+
+    attr_node = nodes.new("ShaderNodeAttribute")
+    attr_node.attribute_name = "opacity"
+    attr_node.attribute_type = "OBJECT"
+
+    # Set node positions
+    attr_node.location = (-300, 300)
+    transparent.location = (-300, 100)
+
+    emission.location = (-300, 0)
+    mix_shader.location = (0, 100)
+    output.location = (300, 100)
+
+    # Set Emission color
+    emission.inputs[0].default_value = color  # Use the provided color
+    emission.inputs[1].default_value = 1.0  # Emission strength
+
+    # Link nodes
+    links.new(transparent.outputs[0], mix_shader.inputs[1])
+    links.new(emission.outputs[0], mix_shader.inputs[2])
+    links.new(mix_shader.outputs[0], output.inputs[0])
+    links.new(
+        attr_node.outputs["Fac"], mix_shader.inputs[0]
+    )  # Use object opacity attribute
+
+    return mat
+
 
 # Operator for the button and drag-and-drop with post-processing
 class ImportSVGOperator(bpy.types.Operator, ImportHelper):
@@ -121,6 +233,18 @@ class ImportSVGEmissionOperator(bpy.types.Operator, ImportHelper):
 
         imported_collection.name = f"SVG_Emission_{file_name_without_ext}"
         imported_collection.processed_svg = processed_svg
+
+        # Setup objects and materials
+        for obj in imported_collection.objects:
+            # Rename curve objects from "Curve" to "n"
+            if obj.name.startswith("Curve"):
+                obj.name = "n" + obj.name[5:]
+            setup_object(obj, scale_factor=200)
+
+        deduplicate_materials(imported_collection)
+
+
+
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         self.report(

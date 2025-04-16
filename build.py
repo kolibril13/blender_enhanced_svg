@@ -35,7 +35,7 @@ except ModuleNotFoundError:
     run_python("-m pip install tomlkit")
     import tomlkit
 
-ADDON_NAME = "spicy_svg"
+ADDON_NAME = "enhanced_svg"
 TOML_PATH = "./blender_manifest.toml"
 WHL_PATH = f"./{ADDON_NAME}/wheels"
 PYPROJ_PATH = "./pyproject.toml"

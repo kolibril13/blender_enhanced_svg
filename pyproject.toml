@@ -1,5 +1,5 @@
 [project]
-name = "spicy_svg"
+name = "enhanced_svg"
 version = "0.0.1"  # Placeholder; the real version is defined in blender_manifest.toml
 description = "Blender extension to render SVG files"
 license = { text = "AGPL-3.0-or-later" }
@@ -12,9 +12,9 @@ maintainers = [
 ]
 
 [project.urls]
-Homepage = "https://extensions.blender.org/add-ons/spicy-svg/"
-Repository = "https://github.com/kolibril13/blender_spicy_svg"
-# Documentation = "https://kolibril13.github.io/blender_spicy_svg"
+Homepage = "https://extensions.blender.org/add-ons/enhanced_svg/"
+Repository = "https://github.com/kolibril13/blender_enhanced_svg"
+# Documentation = "https://kolibril13.github.io/blender_enhanced_svg"
 
 [project.optional-dependencies]
 bpy = ["bpy>=4.2"]
@@ -27,4 +27,4 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=61.0"]
 
 [tool.setuptools]
-packages = ["spicy_svg"]
+packages = ["enhanced_svg"]
