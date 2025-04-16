@@ -238,13 +238,13 @@ def stroke_to_filled_path(svg_content):
     return etree.tostring(root, encoding="unicode", pretty_print=True)
 
 
-def convert_text_to_paths(svg_content):
-    """
-    Converts all text elements in the SVG to path elements.
-    Uses the text_to_path module to convert text to actual glyph outlines.
-    """
-    from text_to_path import convert_text_to_paths_in_svg
-    return convert_text_to_paths_in_svg(svg_content)
+# def convert_text_to_paths(svg_content):
+#     """
+#     Converts all text elements in the SVG to path elements.
+#     Uses the text_to_path module to convert text to actual glyph outlines.
+#     """
+#     from text_to_path import convert_text_to_paths_in_svg
+#     return convert_text_to_paths_in_svg(svg_content)
 
 
 def preprocess_svg(svg_content):
