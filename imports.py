@@ -64,7 +64,7 @@ def deduplicate_materials(collection: bpy.types.Collection) -> None:
 
 
 # Core object and material setup functions
-def setup_object(obj: bpy.types.Object, scale_factor: float = 200) -> None:
+def setup_object(obj: bpy.types.Object, scale_factor: float = 1) -> None:
     """Setup individual object properties."""
     obj.data.transform(Matrix.Scale(scale_factor, 4))
     obj["opacity"] = 1.0
@@ -239,7 +239,7 @@ class ImportSVGEmissionOperator(bpy.types.Operator, ImportHelper):
             # Rename curve objects from "Curve" to "n"
             if obj.name.startswith("Curve"):
                 obj.name = "n" + obj.name[5:]
-            setup_object(obj, scale_factor=200)
+            setup_object(obj, scale_factor=1)
 
         deduplicate_materials(imported_collection)
 
