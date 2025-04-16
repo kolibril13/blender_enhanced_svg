@@ -1,3 +1,5 @@
+# this is not yet used, but might be useful for the future
+
 import os
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
