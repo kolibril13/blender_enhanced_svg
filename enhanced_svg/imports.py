@@ -167,6 +167,8 @@ class ImportSVGOperator(bpy.types.Operator, ImportHelper):
             raise RuntimeError("Failed to import SVG file")
 
         imported_collection.name = f"SVG_Processed_{file_name_without_ext}"
+
+        # this seems to cause an issue: https://github.com/kolibril13/blender_enhanced_svg/issues/1#issuecomment-2935003844
         imported_collection.processed_svg = processed_svg
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
