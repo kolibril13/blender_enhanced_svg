@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "enhanced_svg"
-version = "0.1.1"
+version = "0.1.2"
 name = "Enhanced SVG"
 tagline = "Import SVG with accurate colors and path processing"
 maintainer = "Jan-Hendrik Müller"
@@ -16,7 +16,9 @@ type = "add-on"
 
 # Optional list defined by Blender and server, see:
 # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
-tags = ["Import-Export"]
+tags = [
+	"Import-Export",
+]
 
 blender_version_min = "4.2.0"
 # # Optional: Blender version that the extension does not support, earlier versions are supported.
@@ -25,15 +27,22 @@ blender_version_min = "4.2.0"
 
 # License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
 # https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html
-license = ["SPDX:GPL-3.0-or-later"]
+license = [
+	"SPDX:GPL-3.0-or-later",
+]
 
 # Optional list of supported platforms. If omitted, the extension will be available in all operating systems.
-platforms = ["windows-x64", "linux-x64", "macos-arm64", "macos-x64"]
-
-wheels = [
-	"./wheels/lxml-5.3.2-cp311-cp311-macosx_10_9_universal2.whl",
-	"./wheels/lxml-5.3.2-cp311-cp311-macosx_10_9_x86_64.whl",
-	"./wheels/lxml-5.3.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-	"./wheels/lxml-5.3.2-cp311-cp311-win_amd64.whl",
-	"./wheels/svg.path-6.3-py2.py3-none-any.whl",
+platforms = [
+	"windows-x64",
+	"linux-x64",
+	"macos-arm64",
+	"macos-x64",
 ]
+wheels = [
+	"./wheels/lxml-6.0.0-cp311-cp311-macosx_10_9_universal2.whl",
+	"./wheels/lxml-6.0.0-cp311-cp311-macosx_10_9_x86_64.whl",
+	"./wheels/lxml-6.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+	"./wheels/lxml-6.0.0-cp311-cp311-win_amd64.whl",
+	"./wheels/svg_path-7.0-py2.py3-none-any.whl",
+]
+
