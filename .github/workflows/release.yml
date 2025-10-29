@@ -19,7 +19,7 @@ jobs:
             version: 4.5
       - name: Build Extension
         run: |
-          blender -b -P build.py
+          blender -b -P enhanced_svg/build.py
       - name: Create Draft Release
         run: |
           gh release create ${{ github.ref_name }} --draft --generate-notes *.zip
