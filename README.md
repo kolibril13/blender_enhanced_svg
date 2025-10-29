@@ -13,6 +13,11 @@ Right: with preprocessing
 # Changelog
 
 
+v0.1.3
+
+* Bump versions of dependencies
+* automate workflow
+
 v0.1.2
 
 * Fix import error: https://github.com/kolibril13/blender_enhanced_svg/issues/1#issuecomment-3071963714
