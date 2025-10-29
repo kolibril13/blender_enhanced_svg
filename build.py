@@ -13,6 +13,13 @@ from typing import List, Union
 import bpy
 
 
+
+ADDON_NAME = "enhanced_svg" # TO CHANGE
+TOML_PATH = f"./{ADDON_NAME}/blender_manifest.toml"
+WHL_PATH = f"./{ADDON_NAME}/wheels"
+
+required_packages = ["svg.path" , "lxml"] # TO CHANGE
+
 def run_python(args: str | List[str]):
     python = os.path.realpath(sys.executable)
 
@@ -35,10 +42,7 @@ except ModuleNotFoundError:
     run_python("-m pip install tomlkit")
     import tomlkit
 
-ADDON_NAME = "enhanced_svg"
-TOML_PATH = "./blender_manifest.toml"
-WHL_PATH = f"./{ADDON_NAME}/wheels"
-PYPROJ_PATH = "./pyproject.toml"
+
 
 
 @dataclass
@@ -54,18 +58,11 @@ class Platform:
 windows_x64 = Platform(pypi_suffix="win_amd64", metadata="windows-x64")
 linux_x64 = Platform(pypi_suffix="manylinux2014_x86_64", metadata="linux-x64")
 macos_arm = Platform(pypi_suffix="macosx_12_0_arm64", metadata="macos-arm64")
-macos_intel = Platform(pypi_suffix="macosx_10_16_x86_64", metadata="macos-x64")
-
-
-with open(PYPROJ_PATH, "r") as file:
-    pyproj = tomlkit.parse(file.read())
-    required_packages = pyproj["project"]["dependencies"]
 
 build_platforms = [
     windows_x64,
     linux_x64,
     macos_arm,
-    macos_intel,
 ]
 
 
