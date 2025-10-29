@@ -12,6 +12,11 @@ Right: with preprocessing
 
 # Changelog
 
+v0.1.8
+
+* Add z offset panel
+![alt text](image.png)
+
 
 v0.1.7
 
