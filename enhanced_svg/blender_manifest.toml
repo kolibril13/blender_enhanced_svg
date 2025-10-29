@@ -28,6 +28,12 @@ blender_version_min = "4.5.0"
 copyright = [
 	"2025 Jan-Hendrik Müller", 
 ]
+wheels = [
+	"./wheels/lxml-6.0.2-cp311-cp311-macosx_10_9_universal2.whl",
+	"./wheels/lxml-6.0.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+	"./wheels/lxml-6.0.2-cp311-cp311-win_amd64.whl",
+	"./wheels/svg_path-7.0-py2.py3-none-any.whl",
+]
 
 [permissions]
 files = "Importing data files from disk"

@@ -1,6 +1,6 @@
 # mostly identical to from https://github.com/BradyAJohnston/MolecularNodes/blob/main/build.py
 # run with
-# /Applications/Blender.app/Contents/MacOS/Blender -b -P build.py
+# /Applications/Blender.app/Contents/MacOS/Blender -b -P enhanced_svg/build.py # Important one
 # and later with
 # /Applications/Blender.app/Contents/MacOS/Blender --command extension build --split-platforms
 
