@@ -19,7 +19,6 @@ TOML_PATH = f"./{ADDON_NAME}/blender_manifest.toml"
 WHL_PATH = f"./{ADDON_NAME}/wheels"
 
 required_packages = ["svg.path" , "lxml"] # TO CHANGE
-
 def run_python(args: str | List[str]):
     python = os.path.realpath(sys.executable)
 
@@ -74,7 +73,7 @@ def remove_whls():
 def download_whls(
     platforms: Union[Platform, List[Platform]],
     required_packages: List[str] = required_packages,
-    python_version="3.11",
+    python_version = "3.13",
     clean: bool = True,
 ):
     if isinstance(platforms, Platform):
