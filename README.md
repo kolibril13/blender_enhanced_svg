@@ -12,6 +12,10 @@ Right: with preprocessing
 
 # Changelog
 
+v0.2.0
+
+Support for Blender 5.1
+
 v0.1.8
 
 * Add z offset panel

@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "enhanced_svg"  
-version = "0.2.0"
+version = "0.2.1"
 name = "Enhanced SVG" 
 tagline = "Import SVG with accurate colors and path processing"
 maintainer = "Jan-Hendrik Müller"
@@ -10,7 +10,7 @@ license = [
 ]
 
 type = "add-on"
-website = "https://github.com/kolibril13/enhanced_svg"  # TO CHANGE
+website = "https://github.com/kolibril13/blender_enhanced_svg"  # TO CHANGE
 platforms = [
 	"windows-x64",
 	"linux-x64",
