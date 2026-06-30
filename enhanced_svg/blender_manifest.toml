@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "enhanced_svg"  
-version = "0.2.1"
+version = "0.2.3"
 name = "Enhanced SVG" 
 tagline = "Import SVG with accurate colors and path processing"
 maintainer = "Jan-Hendrik Müller"
@@ -45,4 +45,5 @@ paths_exclude_pattern = [
 	".gitignore",    # Exclude gitignore
 	"*.zip",         # Exclude *.zip
 	"*__pycache__/", # Exclude /__pycache__ folder
+	"build.py",      # Exclude build/dev script
 ]
