@@ -55,53 +55,70 @@ def flatten_svg(svg_content):
     """
     tree = parse_svg_string(svg_content)
 
-    # Collect all <symbol> elements by ID.
-    symbols = {}
-    for symbol in tree.xpath("//svg:defs/svg:symbol", namespaces=NS_MAP):
-        symbol_id = symbol.get("id")
-        if symbol_id:
-            symbols[symbol_id] = symbol
+    # Collect every element that can be referenced by ID; <use> may point at
+    # any element with an id, not only <symbol> inside <defs>.
+    elements_by_id = {}
+    for el in tree.xpath("//*[@id]"):
+        elements_by_id[el.get("id")] = el
 
-    # Replace each <use> element with a group containing a clone of its referenced symbol.
-    for use_el in tree.xpath("//svg:use", namespaces=NS_MAP):
-        href = use_el.get(f"{{{NS_MAP['xlink']}}}href")
-        if href and href.startswith("#"):
-            symbol_id = href[1:]
-            symbol = symbols.get(symbol_id)
-            if symbol is not None:
-                # Create a new group (<g>) to hold the cloned content.
-                new_g = etree.Element(f"{{{SVG_NS}}}g")
+    # Replace each <use> element with a group containing a clone of its
+    # referenced element. Repeat to resolve <use> references nested inside
+    # cloned content (bounded to guard against reference cycles).
+    for _ in range(10):
+        use_elements = tree.xpath("//svg:use", namespaces=NS_MAP)
+        if not use_elements:
+            break
+        for use_el in use_elements:
+            # SVG 1.1 uses xlink:href, SVG 2 uses plain href.
+            href = use_el.get(f"{{{NS_MAP['xlink']}}}href") or use_el.get("href")
+            if not (href and href.startswith("#")):
+                continue
+            target = elements_by_id.get(href[1:])
+            if target is None:
+                continue
 
-                # Incorporate any x, y, and transform attributes.
-                x = float(use_el.get("x", "0"))
-                y = float(use_el.get("y", "0"))
-                transform = use_el.get("transform", "")
-                transforms = []
-                if x != 0 or y != 0:
-                    transforms.append(f"translate({x},{y})")
-                if transform:
-                    transforms.append(transform)
-                if transforms:
-                    new_g.set("transform", " ".join(transforms))
+            # Create a new group (<g>) to hold the cloned content.
+            new_g = etree.Element(f"{{{SVG_NS}}}g")
 
-                # Copy over any additional attributes (such as fill, etc.).
-                for attr_name, attr_value in use_el.items():
-                    if attr_name not in (
-                        "x",
-                        "y",
-                        "transform",
-                        f"{{{NS_MAP['xlink']}}}href",
-                    ):
-                        new_g.set(attr_name, attr_value)
+            # Incorporate any x, y, and transform attributes.
+            x = float(use_el.get("x", "0"))
+            y = float(use_el.get("y", "0"))
+            transform = use_el.get("transform", "")
+            transforms = []
+            if x != 0 or y != 0:
+                transforms.append(f"translate({x},{y})")
+            if transform:
+                transforms.append(transform)
+            if transforms:
+                new_g.set("transform", " ".join(transforms))
 
-                # Deep-clone each child of the referenced symbol into the new group.
-                for child in symbol:
+            # Copy over any additional attributes (such as fill, etc.).
+            for attr_name, attr_value in use_el.items():
+                if attr_name not in (
+                    "x",
+                    "y",
+                    "transform",
+                    "href",
+                    f"{{{NS_MAP['xlink']}}}href",
+                ):
+                    new_g.set(attr_name, attr_value)
+
+            # <symbol> and <svg> targets contribute their children; any other
+            # element is cloned as a whole.
+            local_name = etree.QName(target).localname
+            if local_name in ("symbol", "svg"):
+                for child in target:
                     new_g.append(copy.deepcopy(child))
+            else:
+                clone = copy.deepcopy(target)
+                # Drop the id so the flattened output has no duplicate ids.
+                clone.attrib.pop("id", None)
+                new_g.append(clone)
 
-                # Replace the <use> element with the new group.
-                parent = use_el.getparent()
-                if parent is not None:
-                    parent.replace(use_el, new_g)
+            # Replace the <use> element with the new group.
+            parent = use_el.getparent()
+            if parent is not None:
+                parent.replace(use_el, new_g)
 
     # Remove the entire <defs> section (no longer needed).
     for defs in tree.xpath("//svg:defs", namespaces=NS_MAP):
@@ -202,28 +219,56 @@ def stroke_to_filled_path(svg_content):
     path_elems = root.xpath(".//svg:path", namespaces=NS_MAP)
     for path_elem in path_elems:
         attrib = path_elem.attrib
-        if "stroke" in attrib and "stroke-width" in attrib:
-            d_attr = attrib.get("d")
-            try:
-                stroke_width = float(attrib.get("stroke-width"))
-            except ValueError:
-                continue
+        stroke = attrib.get("stroke")
+        if stroke is None or stroke.strip().lower() == "none":
+            continue
+        if "stroke-width" not in attrib:
+            continue
+        d_attr = attrib.get("d")
+        if not d_attr:
+            continue
+        try:
+            stroke_width = float(attrib.get("stroke-width"))
+        except ValueError:
+            continue
+        if stroke_width <= 0:
+            continue
 
-            # Convert the stroke to a filled outline.
-            new_d = stroke_to_path(d_attr, stroke_width)
+        # Convert the stroke to a filled outline.
+        new_d = stroke_to_path(d_attr, stroke_width)
 
-            # Create a new <path> element with the computed outline.
-            new_path = etree.Element(f"{{{SVG_NS}}}path")
-            new_path.set("d", new_d)
-            new_path.set("fill", attrib.get("stroke"))
-            new_path.set("fill-rule", "nonzero")
-            if "transform" in attrib:
-                new_path.set("transform", attrib.get("transform"))
+        # Create a new <path> element with the computed outline.
+        new_path = etree.Element(f"{{{SVG_NS}}}path")
+        new_path.set("d", new_d)
+        new_path.set("fill", stroke)
+        new_path.set("fill-rule", "nonzero")
+        if "transform" in attrib:
+            new_path.set("transform", attrib.get("transform"))
 
-            # Replace the old path with the new one.
-            parent = path_elem.getparent()
-            if parent is not None:
-                parent.replace(path_elem, new_path)
+        parent = path_elem.getparent()
+        if parent is None:
+            continue
+
+        fill = attrib.get("fill")
+        if fill is not None and fill.strip().lower() == "none":
+            # Stroke-only path: the outline fully replaces it.
+            parent.replace(path_elem, new_path)
+        else:
+            # The path also has a visible fill (explicit, or the SVG default
+            # black when no fill attribute is set): keep the filled path and
+            # paint the stroke outline on top of it.
+            for stroke_attr in (
+                "stroke",
+                "stroke-width",
+                "stroke-linecap",
+                "stroke-linejoin",
+                "stroke-opacity",
+                "stroke-dasharray",
+                "stroke-dashoffset",
+                "stroke-miterlimit",
+            ):
+                attrib.pop(stroke_attr, None)
+            parent.insert(parent.index(path_elem) + 1, new_path)
 
     return etree.tostring(root, encoding="unicode", pretty_print=True)
 
