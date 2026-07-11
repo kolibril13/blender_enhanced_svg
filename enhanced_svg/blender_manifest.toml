@@ -29,10 +29,10 @@ copyright = [
 	"2025 Jan-Hendrik Müller", 
 ]
 wheels = [
-	"./wheels/lxml-6.0.2-cp313-cp313-macosx_10_13_universal2.whl",
-	"./wheels/lxml-6.0.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-	"./wheels/lxml-6.0.2-cp313-cp313-win_amd64.whl",
-	"./wheels/svg_path-7.0-py2.py3-none-any.whl",
+	"./wheels/lxml-6.1.1-cp313-cp313-macosx_10_13_universal2.whl",
+	"./wheels/lxml-6.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+	"./wheels/lxml-6.1.1-cp313-cp313-win_amd64.whl",
+	"./wheels/svg_path-7.1-py2.py3-none-any.whl",
 ]
 
 [permissions]
