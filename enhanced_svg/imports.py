@@ -4,7 +4,6 @@ from bpy.props import StringProperty
 from pathlib import Path
 import tempfile
 from mathutils import Matrix
-import contextlib
 
 import time
 
@@ -18,11 +17,8 @@ def deduplicate_materials(collection: bpy.types.Collection) -> None:
         collection: The collection containing objects whose materials need deduplication
     """
 
-    # # Clean up any remaining unused materials that might have been created before
-    # for _ in range(3):  # Run multiple times to ensure all orphaned data is removed
-    #     bpy.ops.outliner.orphans_purge(do_recursive=True) #TODO : not very tested, and might delete some materials unintended
-
     materials_dict = {}
+    replaced_materials = set()
 
     for obj in collection.objects:
         if not obj.data.materials:
@@ -31,36 +27,25 @@ def deduplicate_materials(collection: bpy.types.Collection) -> None:
         current_mat = obj.data.materials[0]
         mat_key = tuple(current_mat.diffuse_color)
 
-        if mat_key in materials_dict:
-            obj.data.materials.clear()
-            obj.data.materials.append(materials_dict[mat_key])
-        else:
+        if mat_key not in materials_dict:
             rgb = current_mat.diffuse_color[:3]
             hex_color = "".join(f"{int(c*255):02x}" for c in rgb)
             mat_name = f"Mat{len(materials_dict)}_#{hex_color}"
+            materials_dict[mat_key] = create_material(
+                current_mat.diffuse_color, mat_name
+            )
 
-            # Check if material already exists in Blender
-            existing_mat = bpy.data.materials.get(mat_name)
-            if existing_mat:
-                new_mat = existing_mat
-            else:
-                new_mat = create_material(current_mat.diffuse_color, mat_name)
-
-            materials_dict[mat_key] = new_mat
-
+        new_mat = materials_dict[mat_key]
+        if current_mat != new_mat:
+            replaced_materials.add(current_mat)
             obj.data.materials.clear()
             obj.data.materials.append(new_mat)
 
-            if current_mat.users == 0:
-                bpy.data.materials.remove(current_mat)
-
-    # Clean up any remaining unused materials
-    # for _ in range(3):  # Run multiple times to ensure all orphaned data is removed
-    with contextlib.redirect_stdout(None):
-
-        bpy.ops.outliner.orphans_purge(
-            do_recursive=True
-        )  # TODO : not very tested, and might delete some materials unintended
+    # Remove only the materials this import replaced; a global orphans_purge
+    # would also delete unrelated unused data-blocks from the user's file.
+    for mat in replaced_materials:
+        if mat.users == 0:
+            bpy.data.materials.remove(mat)
 
 
 # Core object and material setup functions
@@ -150,21 +135,28 @@ class ImportSVGOperator(bpy.types.Operator, ImportHelper):
         start_time = time.perf_counter()
 
         # Compile and import the file using our helper function
-        processed_svg = preprocess_svg(raw_svg_file.read_text())
+        processed_svg = preprocess_svg(raw_svg_file.read_text(encoding="utf-8"))
 
         # Create temporary files
         temp_dir = Path(tempfile.gettempdir())
         processed_svg_file = temp_dir / f"{file_name_without_ext}.svg"
-        processed_svg_file.write_text(processed_svg)
+        processed_svg_file.write_text(processed_svg, encoding="utf-8")
+
+        # Snapshot existing collections so the new one can be found by diffing;
+        # looking it up by name breaks when a collection with the same name
+        # already exists and Blender appends a .001 suffix.
+        collections_before = set(context.scene.collection.children)
 
         bpy.ops.import_curve.svg(filepath=str(processed_svg_file))
 
-        # Get and rename the imported collection
-        imported_collection = bpy.context.scene.collection.children.get(
-            processed_svg_file.name
-        )
-        if not imported_collection:
+        new_collections = [
+            coll
+            for coll in context.scene.collection.children
+            if coll not in collections_before
+        ]
+        if not new_collections:
             raise RuntimeError("Failed to import SVG file")
+        imported_collection = new_collections[0]
 
         imported_collection.name = f"SVG_Processed_{file_name_without_ext}"
 
@@ -217,21 +209,28 @@ class ImportSVGEmissionOperator(bpy.types.Operator, ImportHelper):
         start_time = time.perf_counter()
 
         # Compile and import the file using our helper function
-        processed_svg = preprocess_svg(raw_svg_file.read_text())
+        processed_svg = preprocess_svg(raw_svg_file.read_text(encoding="utf-8"))
 
         # Create temporary files
         temp_dir = Path(tempfile.gettempdir())
         processed_svg_file = temp_dir / f"{file_name_without_ext}.svg"
-        processed_svg_file.write_text(processed_svg)
+        processed_svg_file.write_text(processed_svg, encoding="utf-8")
+
+        # Snapshot existing collections so the new one can be found by diffing;
+        # looking it up by name breaks when a collection with the same name
+        # already exists and Blender appends a .001 suffix.
+        collections_before = set(context.scene.collection.children)
 
         bpy.ops.import_curve.svg(filepath=str(processed_svg_file))
 
-        # Get and rename the imported collection
-        imported_collection = bpy.context.scene.collection.children.get(
-            processed_svg_file.name
-        )
-        if not imported_collection:
+        new_collections = [
+            coll
+            for coll in context.scene.collection.children
+            if coll not in collections_before
+        ]
+        if not new_collections:
             raise RuntimeError("Failed to import SVG file")
+        imported_collection = new_collections[0]
 
         imported_collection.name = f"SVG_Emission_{file_name_without_ext}"
         imported_collection["processed_svg"] = processed_svg
@@ -293,15 +292,22 @@ class ImportSimpleSVGOperator(bpy.types.Operator, ImportHelper):
         # Start the timer
         start_time = time.perf_counter()
 
+        # Snapshot existing collections so the new one can be found by diffing;
+        # looking it up by name breaks when a collection with the same name
+        # already exists and Blender appends a .001 suffix.
+        collections_before = set(context.scene.collection.children)
+
         # Import SVG directly without preprocessing
         bpy.ops.import_curve.svg(filepath=str(svg_file))
 
-        # Get and rename the imported collection (using the original filename)
-        imported_collection = bpy.context.scene.collection.children.get(
-            svg_file.name
-        )
-        if not imported_collection:
+        new_collections = [
+            coll
+            for coll in context.scene.collection.children
+            if coll not in collections_before
+        ]
+        if not new_collections:
             raise RuntimeError("Failed to import SVG file")
+        imported_collection = new_collections[0]
 
         imported_collection.name = f"SVG_Simple_{file_name_without_ext}"
 
