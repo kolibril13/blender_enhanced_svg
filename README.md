@@ -12,6 +12,11 @@ Right: with preprocessing
 
 # Changelog
 
+Unreleased
+
+* Import raster images embedded in the SVG (data URIs in `<defs>` or inline, plus external file references) as textured planes, placed to match the imported curves. Images are packed into the .blend, and get a diffuse or emission material (depending on the importer used) with the texture's color and alpha.
+* Fix crash in the emission importer when a curve has an empty material slot
+
 v0.2.0
 
 Support for Blender 5.1

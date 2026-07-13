@@ -8,6 +8,7 @@ from mathutils import Matrix
 import time
 
 from .svg_preprocessing import preprocess_svg
+from .image_import import extract_svg_images, create_image_planes
 
 def deduplicate_materials(collection: bpy.types.Collection) -> None:
     """
@@ -25,6 +26,9 @@ def deduplicate_materials(collection: bpy.types.Collection) -> None:
             continue
 
         current_mat = obj.data.materials[0]
+        if current_mat is None:
+            continue
+
         mat_key = tuple(current_mat.diffuse_color)
 
         if mat_key not in materials_dict:
@@ -135,7 +139,8 @@ class ImportSVGOperator(bpy.types.Operator, ImportHelper):
         start_time = time.perf_counter()
 
         # Compile and import the file using our helper function
-        processed_svg = preprocess_svg(raw_svg_file.read_text(encoding="utf-8"))
+        raw_svg_content = raw_svg_file.read_text(encoding="utf-8")
+        processed_svg = preprocess_svg(raw_svg_content)
 
         # Create temporary files
         temp_dir = Path(tempfile.gettempdir())
@@ -163,10 +168,24 @@ class ImportSVGOperator(bpy.types.Operator, ImportHelper):
         # fixes: https://github.com/kolibril13/blender_enhanced_svg/issues/1#issuecomment-2935003844
         imported_collection["processed_svg"] = processed_svg
 
+        # Import embedded/referenced raster images as textured planes.
+        # Uses the raw SVG content: preprocessing strips the <defs>
+        # section where embedded images live.
+        images, image_warnings = extract_svg_images(
+            raw_svg_content,
+            svg_dir=raw_svg_file.parent,
+            scene_scale_length=context.scene.unit_settings.scale_length,
+        )
+        image_objects = create_image_planes(
+            images, imported_collection, use_emission=False
+        )
+        for warning in image_warnings:
+            self.report({"WARNING"}, warning)
+
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         self.report(
             {"INFO"},
-            f" 🦢  SVG Importer (Processed): {raw_svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {imported_collection.name}",
+            f" 🦢  SVG Importer (Processed): {raw_svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {imported_collection.name} ({len(image_objects)} images)",
         )
         return {"FINISHED"}
 
@@ -209,7 +228,8 @@ class ImportSVGEmissionOperator(bpy.types.Operator, ImportHelper):
         start_time = time.perf_counter()
 
         # Compile and import the file using our helper function
-        processed_svg = preprocess_svg(raw_svg_file.read_text(encoding="utf-8"))
+        raw_svg_content = raw_svg_file.read_text(encoding="utf-8")
+        processed_svg = preprocess_svg(raw_svg_content)
 
         # Create temporary files
         temp_dir = Path(tempfile.gettempdir())
@@ -244,13 +264,25 @@ class ImportSVGEmissionOperator(bpy.types.Operator, ImportHelper):
 
         deduplicate_materials(imported_collection)
 
-
-
+        # Import embedded/referenced raster images as textured planes.
+        # Must run on the raw SVG content (preprocessing strips <defs>)
+        # and after deduplicate_materials, which only understands the
+        # flat-color curve materials.
+        images, image_warnings = extract_svg_images(
+            raw_svg_content,
+            svg_dir=raw_svg_file.parent,
+            scene_scale_length=context.scene.unit_settings.scale_length,
+        )
+        image_objects = create_image_planes(
+            images, imported_collection, use_emission=True
+        )
+        for warning in image_warnings:
+            self.report({"WARNING"}, warning)
 
         elapsed_time_ms = (time.perf_counter() - start_time) * 1000
         self.report(
             {"INFO"},
-            f" 🦢  SVG Importer (Emission): {raw_svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {imported_collection.name}",
+            f" 🦢  SVG Importer (Emission): {raw_svg_file.name} rendered in {elapsed_time_ms:.2f} ms as {imported_collection.name} ({len(image_objects)} images)",
         )
         return {"FINISHED"}
 
@@ -352,7 +384,7 @@ class SimpleSVG_FH_import(bpy.types.FileHandler):
 
     @classmethod
     def poll_drop(cls, context):
-        # Allow drag–n–drop 
+        # Allow drag–n–drop
         return context.area is not None
 
 # File Handler for drag-and-drop support (emission SVG)
