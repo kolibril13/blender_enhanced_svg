@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  blender-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: BradyAJohnston/setup-blender@v5
+        with:
+          version: 5.1
+
+      - name: Install test dependencies
+        run: python -m pip install --target .test-deps lxml svg.path
+
+      - name: Run Blender regression suite
+        env:
+          PYTHONPATH: ${{ github.workspace }}/.test-deps
+        run: >-
+          blender --background --factory-startup --python-exit-code 1
+          --python tests/run.py
+
+      - name: Validate extension manifest
+        run: blender --command extension validate enhanced_svg
