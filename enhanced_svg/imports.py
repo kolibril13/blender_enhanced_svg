@@ -558,10 +558,10 @@ class SVG_FH_import(bpy.types.FileHandler):
         return context.area is not None
 
 # File Handler for drag-and-drop support (simple SVG)
-class SimpleSVG_FH_import(bpy.types.FileHandler):
+class SIMPLESVG_FH_import(bpy.types.FileHandler):
     """A file handler to allow .svg files to be dragged and dropped directly into Blender without processing."""
 
-    bl_idname = "SimpleSVG_FH_import"
+    bl_idname = "SIMPLESVG_FH_import"
     bl_label = "File handler for simple SVG import"
     bl_import_operator = "import_scene.import_simple_svg"
     bl_file_extensions = ".svg"
@@ -572,10 +572,10 @@ class SimpleSVG_FH_import(bpy.types.FileHandler):
         return context.area is not None
 
 # File Handler for drag-and-drop support (emission SVG)
-class EmissionSVG_FH_import(bpy.types.FileHandler):
+class EMISSIONSVG_FH_import(bpy.types.FileHandler):
     """A file handler to allow .svg files to be dragged and dropped directly into Blender with processing and emission materials."""
 
-    bl_idname = "EmissionSVG_FH_import"
+    bl_idname = "EMISSIONSVG_FH_import"
     bl_label = "File handler for SVG import with processing and emission"
     bl_import_operator = "import_scene.import_svg_emission"
     bl_file_extensions = ".svg"
