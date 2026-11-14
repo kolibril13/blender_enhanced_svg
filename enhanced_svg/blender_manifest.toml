@@ -1,8 +1,8 @@
 schema_version = "1.0.0"
 
-id = "enhanced_svg"  
+id = "enhanced_svg"
 version = "0.2.5"
-name = "Enhanced SVG" 
+name = "Enhanced SVG"
 tagline = "Import SVG with accurate colors and path processing"
 maintainer = "Jan-Hendrik Müller"
 license = [
@@ -10,7 +10,7 @@ license = [
 ]
 
 type = "add-on"
-website = "https://github.com/kolibril13/blender_enhanced_svg"  # TO CHANGE
+website = "https://github.com/kolibril13/blender_enhanced_svg"
 platforms = [
 	"windows-x64",
 	"linux-x64",
@@ -23,15 +23,16 @@ tags = [
 	"Import-Export",
 ]
 
+# 5.1 is the first release bundling Python 3.13, which the cp313 wheels need.
 blender_version_min = "5.1.0"
 
 copyright = [
-	"2025 Jan-Hendrik Müller", 
+	"2025 Jan-Hendrik Müller",
 ]
 wheels = [
-	"./wheels/lxml-6.1.1-cp313-cp313-macosx_10_13_universal2.whl",
-	"./wheels/lxml-6.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-	"./wheels/lxml-6.1.1-cp313-cp313-win_amd64.whl",
+	"./wheels/lxml-6.1.3-cp313-cp313-macosx_10_13_universal2.whl",
+	"./wheels/lxml-6.1.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+	"./wheels/lxml-6.1.3-cp313-cp313-win_amd64.whl",
 	"./wheels/svg_path-7.1-py2.py3-none-any.whl",
 ]
 

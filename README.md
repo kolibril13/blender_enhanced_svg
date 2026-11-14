@@ -41,23 +41,36 @@ file to see a packed image between background and foreground vector objects.
 
 ## Development
 
-Run the regression suite in Blender 5.1 or newer:
+The add-on needs `lxml` and `svg.path` importable from Blender's Python. Run
+the regression suite in Blender 5.1 or newer:
 
 ```sh
 blender --background --factory-startup --python-exit-code 1 --python tests/run.py
 ```
 
+CI runs the suite against both 5.1, the oldest supported release, and 5.3, the
+latest one. Build the platform-split extension zips with:
 
+```sh
+blender -b -P enhanced_svg/build.py
+```
 
 # Changelog
 
-Unreleased
+v0.2.6
+
+* Test and release against Blender 5.3; CI now also runs the suite against
+  5.1, the oldest supported release
+* Bump lxml to 6.1.3
+
+v0.2.5
 
 * Import raster images embedded in the SVG as packed, aspect-correct textured
   planes with painter-order, viewport, transform, visibility, and opacity
   handling. Local external references are contained to the SVG folder unless
   explicitly allowed.
 * Fix crash in the emission importer when a curve has an empty material slot
+* Fix the file handler ID prefixes, so drag-and-drop registers on startup
 
 v0.2.0
 

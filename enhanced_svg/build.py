@@ -14,11 +14,11 @@ import bpy
 
 
 
-ADDON_NAME = "enhanced_svg" # TO CHANGE
+ADDON_NAME = "enhanced_svg"
 TOML_PATH = f"./{ADDON_NAME}/blender_manifest.toml"
 WHL_PATH = f"./{ADDON_NAME}/wheels"
 
-required_packages = ["svg.path" , "lxml"] # TO CHANGE
+required_packages = ["svg.path", "lxml"]
 def run_python(args: str | List[str]):
     python = os.path.realpath(sys.executable)
 
@@ -32,7 +32,7 @@ def run_python(args: str | List[str]):
             "or a list of individual arguments already split"
         )
 
-    subprocess.run(args)
+    subprocess.run(args, check=True)
 
 
 try:
@@ -147,19 +147,21 @@ def clean_files(suffix: str = ".blend1") -> None:
 
 
 def build_extension(split: bool = True) -> None:
-    for suffix in [".blend1", ".MNSession"]:
-        clean_files(suffix=suffix)
+    clean_files(suffix=".blend1")
 
+    command = [
+        bpy.app.binary_path,
+        "--command",
+        "extension",
+        "build",
+        "--source-dir",
+        ADDON_NAME,
+        "--output-dir",
+        ".",
+    ]
     if split:
-        subprocess.run(
-            f"{bpy.app.binary_path} --command extension build"
-            f" --split-platforms --source-dir {ADDON_NAME} --output-dir ".split(" ")
-        )
-    else:
-        subprocess.run(
-            f"{bpy.app.binary_path} --command extension build "
-            f"--source-dir {ADDON_NAME} --output-dir .".split(" ")
-        )
+        command.insert(4, "--split-platforms")
+    subprocess.run(command, check=True)
 
 
 def build(platform) -> None:
